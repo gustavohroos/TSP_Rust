@@ -1,0 +1,8 @@
+TSP: File 1
+elapsed_time_cheapest_insertion: 1us 958ns
+elapsed_time_nearest_neighbor: 26us 708ns
+elapsed_time_bruteforce: 48s 213ms 979us 750ns
+TSP: File 2
+elapsed_time_nearest_neighbor: 9us 167ns
+elapsed_time_bruteforce: 676us 625ns
+elapsed_time_cheapest_insertion: 8us 417ns
