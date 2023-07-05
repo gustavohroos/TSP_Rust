@@ -6,7 +6,7 @@ pub fn cheapest_insertion(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
     let mut visited: Vec<u32> = Vec::new();
 
     while visited.len() < adjacency_matrix.len() {
-        let (cost, index) = insertion_cost(&path, adjacency_matrix, current_vertex);
+        let (_cost, index) = insertion_cost(&path, adjacency_matrix, current_vertex);
         path.insert(index, current_vertex);
         visited.push(current_vertex);
         current_vertex += 1;

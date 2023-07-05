@@ -9,7 +9,7 @@ pub fn nearest_neighbor(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
     
     while visited.len() < adjacency_matrix.len() {
         let row = &adjacency_matrix[current_vertex as usize];
-        let (min_index, min_value) = row.iter()
+        let (min_index, _min_value) = row.iter()
             .enumerate()
             .filter(|&(_, &value)| value != 0)
             .filter(|&(index, _)| !visited.contains(&(index as u32)))

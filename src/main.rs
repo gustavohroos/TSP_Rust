@@ -1,26 +1,18 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use itertools::Itertools;
+use std::io::{BufReader};
 use std::collections::HashMap;
-use std::io::prelude::*;
 use std::time::Duration;
-use humantime::format_duration;
 use std::time::Instant;
 
 mod bruteforce;
-use bruteforce::bruteforce;
 mod cheapest_insertion;
-use cheapest_insertion::cheapest_insertion;
 mod nearest_neighbor;
-use nearest_neighbor::nearest_neighbor;
 mod utils;
+use cheapest_insertion::cheapest_insertion;
+use nearest_neighbor::nearest_neighbor;
 use utils::read_matrix_from_files;
 use utils::mst;
 use utils::write_elapsed_times_to_file;
 use utils::print_matrix;
-
-
-   
 
 fn main() {
     let filenames = ["tsp_data/tsp1_253.txt",
@@ -44,20 +36,19 @@ fn main() {
         let mut elapsed_times: HashMap<String, Duration> = HashMap::new();
         println!("TSP file {}", i);
         i += 1;
-        let mut start_time = Instant::now();     
+        let start_time = Instant::now();     
         let (path_cheapest_insertion, cost_cheapest_insertion) = cheapest_insertion(&adjacency_matrix);
-        let mut end_time = Instant::now();
-        let mut elapsed_time = end_time - start_time;
+        let end_time = Instant::now();
+        let elapsed_time = end_time - start_time;
         println!("Path cheapest insertion: {:?}", path_cheapest_insertion);
         println!("Cost: {}", cost_cheapest_insertion);
         println!("Elapsed time: {:.2?}", elapsed_time);
         elapsed_times.insert(String::from("elapsed_time_cheapest_insertion"), elapsed_time);
 
-
-        let mut start_time = Instant::now();
+        let start_time = Instant::now();
         let (path_nearest_neighbor, cost_nearest_neighbor) = nearest_neighbor(&adjacency_matrix);
-        let mut end_time = Instant::now();
-        let mut elapsed_time = end_time - start_time;
+        let end_time = Instant::now();
+        let elapsed_time = end_time - start_time;
         println!("Path nearest neighbor: {:?}", path_nearest_neighbor);
         println!("Cost: {}", cost_nearest_neighbor);
         println!("Elapsed time: {:.2?}", elapsed_time);
