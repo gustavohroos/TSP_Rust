@@ -12,7 +12,7 @@ use std::time::Instant;
 fn main() {
     let filenames = ["tsp_data/tsp1_253.txt",
                     "tsp_data/tsp2_1248.txt",
-                    // "tsp_data/tsp3_1194.txt",
+                    "tsp_data/tsp3_1194.txt",
                     // "tsp_data/tsp4_7013.txt",
                     // "tsp_data/tsp5_27603.txt"
                     ];
@@ -66,6 +66,44 @@ fn main() {
 
 }
 
+fn cheapest_insertion(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
+    let mut path: Vec<u32> = Vec::<u32>::new();
+    let mut current_vertex = 0;
+    let mut visited: Vec<u32> = Vec::new();
+
+    while visited.len() < adjacency_matrix.len() {
+        let (cost, index) = insertion_cost(&path, adjacency_matrix, current_vertex);
+        path.insert(index, current_vertex);
+        visited.push(current_vertex);
+        current_vertex += 1;
+
+    }
+
+    let best_cost = calculate_cost(&path, adjacency_matrix);
+
+    (path, best_cost)
+
+}
+
+
+fn insertion_cost(path: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>, vertex: u32) -> (u32, usize) {
+    let mut best_cost = u32::MAX;
+    let mut best_index = 0;
+
+    for i in 0..path.len() {
+        let mut new_path: Vec<u32> = path.clone();
+        new_path.insert(i, vertex);
+        let cost = calculate_cost(&new_path, adjacency_matrix);
+
+        if cost < best_cost {
+            best_cost = cost;
+            best_index = i;
+        }
+    }
+
+    (best_cost, best_index)
+}
+
 fn calculate_cost(path: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> u32 {
     let mut cost = 0;
 
@@ -76,30 +114,6 @@ fn calculate_cost(path: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> u32 {
     }
 
     return cost;
-}
-
-
-fn cheapest_insertion(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
-    let mut best_path: Vec<u32> = Vec::new();
-    let mut best_cost: u32 = 0;
-
-    let mut current_vertex = 5;
-    let mut visited: Vec<u32> = Vec::new();
-    visited.push(current_vertex);
-
-    let mut all_visited: bool = false;
-
-    let mut unvisited: Vec<usize> = (0..adjacency_matrix.len()).collect();
-    
-    // while unvisited.len() > 0{
-    //     return visited; 
-
-    // }
-
-    let cost = calculate_cost(&visited, adjacency_matrix);
-
-    (visited, cost)
-
 }
 
 fn nearest_neighbor(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
