@@ -56,13 +56,6 @@ pub fn print_matrix(matrix: &Vec<Vec<u32>>) {
     println!();
 }
 
-pub fn print_vector(vector: &Vec<u32>) {
-    for value in vector {
-        print!("{} ", value);
-    }
-    println!();
-}
-
 pub fn write_elapsed_times_to_file(
         elapsed_time_list: &Vec<HashMap<String, Duration>>,
         file_path: &str,

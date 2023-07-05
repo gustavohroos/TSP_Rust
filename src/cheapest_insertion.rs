@@ -32,7 +32,7 @@ pub fn insertion_cost(path: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>, vertex:
             best_index = i;
         }
 
-        println!("{:?} ", new_path);
+        // println!("{:?} ", new_path);
     }
 
     (best_cost, best_index)

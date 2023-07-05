@@ -1,12 +1,12 @@
 TSP: File 1
-elapsed_time_cheapest_insertion: 167us 666ns
-elapsed_time_nearest_neighbor: 31us 791ns
+elapsed_time_nearest_neighbor: 50us 166ns
+elapsed_time_cheapest_insertion: 126us 459ns
 TSP: File 2
-elapsed_time_nearest_neighbor: 8us 41ns
-elapsed_time_cheapest_insertion: 45us 458ns
+elapsed_time_nearest_neighbor: 14us 541ns
+elapsed_time_cheapest_insertion: 30us 500ns
 TSP: File 3
-elapsed_time_nearest_neighbor: 50us 542ns
-elapsed_time_cheapest_insertion: 666us 708ns
+elapsed_time_nearest_neighbor: 164us 167ns
+elapsed_time_cheapest_insertion: 352us 750ns
 TSP: File 4
-elapsed_time_nearest_neighbor: 336us 542ns
-elapsed_time_cheapest_insertion: 3ms 567us
+elapsed_time_nearest_neighbor: 408us 375ns
+elapsed_time_cheapest_insertion: 1ms 388us 209ns
