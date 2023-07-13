@@ -1,7 +1,7 @@
-use humantime::format_duration;
-use std::fs::File;
-use std::io::Write;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, Write};
 use std::io::BufRead;
+use std::path::Path;
 use crate::Duration;
 use crate::HashMap;
 use crate::BufReader;
@@ -19,12 +19,13 @@ pub fn calculate_cost(path: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> u32 
     return cost;
 }
 
-pub fn read_matrix_from_files(filenames: &[&str]) -> Vec<Vec<Vec<u32>>> {
+pub fn read_matrix_from_files(folder: &str, filenames: &[&str]) -> Vec<Vec<Vec<u32>>> {
 
     let mut adjacency_matrix_list: Vec<Vec<Vec<u32>>> = Vec::new();
 
     for filename in filenames {
-        let file = File::open(filename).expect("Não foi possível abrir o arquivo");
+        let path = format!("{}/{}", folder, filename);
+        let file = File::open(path).expect("Não foi possível abrir o arquivo");
 
         let reader = BufReader::new(file);
 
@@ -56,19 +57,37 @@ pub fn print_matrix(matrix: &Vec<Vec<u32>>) {
     println!();
 }
 
-pub fn write_elapsed_times_to_file(
-        elapsed_time_list: &Vec<HashMap<String, Duration>>,
-        file_path: &str,
-    ) -> std::io::Result<()> {
-    // Create a file for writing
-    let mut file = File::create(file_path)?;
+pub fn write_elapsed_times_to_csv(
+    report: &Vec<Vec<(String, String, u32, Vec<u32>, Duration)>>,
+    file_path: &str,
+) -> io::Result<()> {
+    let should_write_header = !Path::new(file_path).exists();
 
-    for i in 0..elapsed_time_list.len() {
-        let line = format!("TSP: File {}\n", i + 1);
-        file.write_all(line.as_bytes())?;
-        for (key, value) in &elapsed_time_list[i as usize] {
-            let formatted_duration = format_duration(*value);
-            let line = format!("{}: {}\n", key, formatted_duration);
+    let mut file = if should_write_header {
+        File::create(file_path)?
+    } else {
+        OpenOptions::new()
+            .append(true)
+            .open(file_path)
+            .expect("Não foi possível abrir o arquivo")
+    };
+
+    if should_write_header {
+        file.write_all(b"tsp_file,algorithm,cost,elapsed_time\n")?;
+    }
+
+    for i in 0..report.len() {
+        for (filename, algorithm, cost, path, time) in &report[i] {
+            let formatted_duration = time.as_secs_f64();
+            let formatted_algorithm_name = algorithm.to_lowercase().replace(" ", "_");
+            let line = format!(
+                "{},{},{},{}\n",
+                filename.replace(".txt", ""),
+                formatted_algorithm_name,
+                cost,
+                // path.iter().map(|&x| x.to_string()).collect::<Vec<String>>().join(""),
+                formatted_duration
+            );
             file.write_all(line.as_bytes())?;
         }
     }
