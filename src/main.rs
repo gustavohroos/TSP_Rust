@@ -1,43 +1,40 @@
 use std::io::{BufReader};
-use std::collections::HashMap;
 use std::time::Duration;
 use std::time::Instant;
-use std::any::type_name;
 use std::fs;
 
-
 mod bruteforce;
-mod cheapest_insertion;
-mod nearest_neighbor;
+use bruteforce::bruteforce;
+//mod cheapest_insertion;
+//mod nearest_neighbor;
+mod parallel_bruteforce;
+use parallel_bruteforce::parallel_bruteforce;
 mod utils;
-use cheapest_insertion::cheapest_insertion;
-use nearest_neighbor::nearest_neighbor;
+mod christofides;
+use christofides::christofides;
+//use cheapest_insertion::cheapest_insertion;
+//use nearest_neighbor::nearest_neighbor;
 use utils::read_matrix_from_files;
-use utils::mst;
 use utils::write_elapsed_times_to_csv;
-use utils::print_matrix;
 
 fn main() {
     let folder = "tsp_data";
     let filenames = ["tsp1_253.txt",
                     "tsp2_1248.txt",
-                    "tsp3_1194.txt",
+                    //"tsp3_1194.txt",
                     // "tsp4_7013.txt",
-                    "tsp5_27603.txt"
+                    //"tsp5_27603.txt"
                     ];
     
-    let file_path = "report2.csv";
+    let file_path = "report_parallelization.csv";
 
     let adjacency_matrix_list: Vec<Vec<Vec<u32>>> = read_matrix_from_files(&folder, &filenames);
 
-    // let min_tree: Vec<Vec<u32>> = mst(&adjacency_matrix_list[0 as usize]);
-
-    // print_matrix(&min_tree);
+    //christofides(&adjacency_matrix_list[0]);
 
     let mut report: Vec<Vec<(String, String, u32, Vec<u32>, Duration)>> = Vec::new();
-
-    let algorithms: Vec<fn(&Vec<Vec<u32>>) -> (Vec<u32>, u32)> = vec![cheapest_insertion,nearest_neighbor];
-    let algorithm_names = ["Cheapest Insertion", "Nearest Neighbor"];
+    let algorithms: Vec<fn(&Vec<Vec<u32>>) -> (Vec<u32>, u32)> = vec![bruteforce,parallel_bruteforce];
+    let algorithm_names = ["Bruteforce", "Parallel Bruteforce"];
 
     for i in 0..500{
         for (index, adjacency_matrix) in adjacency_matrix_list.iter().enumerate() {
