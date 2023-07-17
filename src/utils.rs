@@ -57,7 +57,7 @@ pub fn print_matrix(matrix: &Vec<Vec<u32>>) {
 }
 
 pub fn write_elapsed_times_to_csv(
-    report: &Vec<Vec<(String, String, u32, Vec<u32>, Duration)>>,
+    report: &Vec<(String, String, u32, Vec<u32>, Duration)>,
     file_path: &str,
 ) -> io::Result<()> {
     let should_write_header = !Path::new(file_path).exists();
@@ -76,19 +76,19 @@ pub fn write_elapsed_times_to_csv(
     }
 
     for i in 0..report.len() {
-        for (filename, algorithm, cost, path, time) in &report[i] {
-            let formatted_duration = time.as_secs_f64();
-            let formatted_algorithm_name = algorithm.to_lowercase().replace(" ", "_");
-            let line = format!(
-                "{},{},{},{}\n",
-                filename.replace(".txt", ""),
-                formatted_algorithm_name,
-                cost,
-                // path.iter().map(|&x| x.to_string()).collect::<Vec<String>>().join(""),
-                formatted_duration
-            );
-            file.write_all(line.as_bytes())?;
-        }
+        //for (filename, algorithm, cost, path, time) in &report[i] {
+        let (filename, algorithm, cost, path, time) = &report[i];
+        let formatted_duration = time.as_secs_f64();
+        let formatted_algorithm_name = algorithm.to_lowercase().replace(" ", "_");
+        let line = format!(
+            "{},{},{},{}\n",
+            filename.replace(".txt", ""),
+            formatted_algorithm_name,
+            cost,
+            // path.iter().map(|&x| x.to_string()).collect::<Vec<String>>().join(""),
+            formatted_duration
+        );
+        file.write_all(line.as_bytes())?;
     }
 
     Ok(())

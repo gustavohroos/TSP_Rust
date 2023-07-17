@@ -6,6 +6,7 @@ pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) {
     // -> Vec<Vec<u32>>
     let mut start_time = Instant::now();
     let mut mst: Vec<Vec<u32>> = prim(adjacency_matrix);
+    print_matrix(&mst);
 
     let vertices_with_odd_degree = vertices_with_odd_degree(&mst);
     println!("{:?}", vertices_with_odd_degree);
@@ -13,10 +14,33 @@ pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) {
     let mut subgraph_with_odd_degree_vertices = subgraph_with_odd_degree_vertices(&vertices_with_odd_degree, &adjacency_matrix);
     print_matrix(&subgraph_with_odd_degree_vertices);
 
-    let full_matching = vec![vec![8,7], vec![6,9]];
+    let full_matching = vec![vec![8,7], vec![6,9]]; // NetworkX python script
+    //let eulerian_multigraph = create_eulerian_multigraph(&mst, full_matching);
+    //print_matrix(&eulerian_multigraph);
+
     let mut end_time = Instant::now();
     let mut elapsed_time = end_time - start_time;
     println!("Christofides : {:?}", elapsed_time);
+}
+
+pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<Vec<u32>>) -> Vec<Vec<u32>> {
+    let mut multigraph: Vec<Vec<u32>> = vec![vec![0; mst.len()]; mst.len()];
+    for i in 0..mst.len() {
+       for j in 0..mst.len() {
+            if mst[i][j] > 0 {
+                multigraph[i][j] += 1;
+                multigraph[j][i] += 1;
+            }
+       }
+    }
+    for pair in full_matching {
+        let i = pair[0];
+        let j = pair[1];
+        multigraph[i][j] += 1;
+        multigraph[j][i] += 1;
+    }
+
+    return multigraph;
 }
 
 pub fn vertices_with_odd_degree(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<u32> {
@@ -71,5 +95,4 @@ pub fn subgraph_with_odd_degree_vertices(vertices_with_odd_degree: &Vec<u32>, ad
     }
     return subgraph;
 }
-
 

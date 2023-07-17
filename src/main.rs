@@ -21,29 +21,28 @@ fn main() {
     let folder = "tsp_data";
     let filenames = ["tsp1_253.txt",
                     "tsp2_1248.txt",
-                    //"tsp3_1194.txt",
-                    // "tsp4_7013.txt",
-                    //"tsp5_27603.txt"
+                    "tsp3_1194.txt",
+                    "tsp4_7013.txt",
+                    "tsp5_27603.txt"
                     ];
     
-    let file_path = "report_parallelization.csv";
+    //let file_path = "report_parallelization.csv";
 
     let adjacency_matrix_list: Vec<Vec<Vec<u32>>> = read_matrix_from_files(&folder, &filenames);
 
-    //christofides(&adjacency_matrix_list[0]);
+    christofides(&adjacency_matrix_list[1]);
 
-    let mut report: Vec<Vec<(String, String, u32, Vec<u32>, Duration)>> = Vec::new();
-    let algorithms: Vec<fn(&Vec<Vec<u32>>) -> (Vec<u32>, u32)> = vec![bruteforce,parallel_bruteforce];
+    //let mut report: Vec<Vec<(String, String, u32, Vec<u32>, Duration)>> = Vec::new();
+    /* let algorithms: Vec<fn(&Vec<Vec<u32>>) -> (Vec<u32>, u32)> = vec![bruteforce,parallel_bruteforce];
     let algorithm_names = ["Bruteforce", "Parallel Bruteforce"];
 
-    for i in 0..500{
+    for i in 0..200{
+        println!("Rodando a iteração: {}", i);
+        let mut elapsed_times : Vec<(String, String, u32, Vec<u32>, Duration)> = Vec::new();
         for (index, adjacency_matrix) in adjacency_matrix_list.iter().enumerate() {
-
-            let mut elapsed_times: Vec<(String, String, u32, Vec<u32>, Duration)> = Vec::new();
             // println!("TSP file: {}", filenames[index]);
             
             for (index_algorithm, algorithm) in algorithms.iter().enumerate() {
-                
                 let start_time = Instant::now();
                 let (path, cost) = algorithm(adjacency_matrix);
                 let end_time = Instant::now();
@@ -59,10 +58,10 @@ fn main() {
             }
             
             // println!("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
-            report.push(elapsed_times);
+            //report.append(elapsed_times.clone());
         }
 
-        if let Err(err) = write_elapsed_times_to_csv(&report, file_path) {
+        if let Err(err) = write_elapsed_times_to_csv(&elapsed_times, file_path) {
             eprintln!("Error writing to CSV: {:?}", err);
             return;
         }
@@ -73,6 +72,6 @@ fn main() {
         } else {
             println!("File creation failed or file not found.");
         }
-    }
+    } */
 }
 
