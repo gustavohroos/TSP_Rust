@@ -22,43 +22,36 @@ fn main() {
     let filenames = ["tsp1_253.txt",
                     "tsp2_1248.txt",
                     "tsp3_1194.txt",
-                    "tsp4_7013.txt",
-                    "tsp5_27603.txt"
+                    // "tsp4_7013.txt",
+                    //"tsp5_27603.txt"
                     ];
     
-    //let file_path = "report_parallelization.csv";
+    let file_path = "report_bruteforce.csv";
 
     let adjacency_matrix_list: Vec<Vec<Vec<u32>>> = read_matrix_from_files(&folder, &filenames);
 
-    christofides(&adjacency_matrix_list[1]);
+    //christofides(&adjacency_matrix_list[0]);
 
-    //let mut report: Vec<Vec<(String, String, u32, Vec<u32>, Duration)>> = Vec::new();
-    /* let algorithms: Vec<fn(&Vec<Vec<u32>>) -> (Vec<u32>, u32)> = vec![bruteforce,parallel_bruteforce];
-    let algorithm_names = ["Bruteforce", "Parallel Bruteforce"];
+    // let mut report: Vec<Vec<(String, String, u32, Vec<u32>, Duration)>> = Vec::new();
+    let algorithms: Vec<fn(&Vec<Vec<u32>>) -> (Vec<u32>, u32)> = vec![bruteforce];
+    // let algorithm_names = ["Bruteforce", "Parallel Bruteforce"];
+    let algorithm_names = ["Bruteforce"];
 
-    for i in 0..200{
-        println!("Rodando a iteração: {}", i);
+    for i in 0..1{
         let mut elapsed_times : Vec<(String, String, u32, Vec<u32>, Duration)> = Vec::new();
+
         for (index, adjacency_matrix) in adjacency_matrix_list.iter().enumerate() {
-            // println!("TSP file: {}", filenames[index]);
+
             
             for (index_algorithm, algorithm) in algorithms.iter().enumerate() {
+                
                 let start_time = Instant::now();
                 let (path, cost) = algorithm(adjacency_matrix);
                 let end_time = Instant::now();
                 let elapsed_time = end_time - start_time;
-                
-                // println!("\n{} Algorithm", algorithm_names[index_algorithm]);
-                // println!("Path: {:?}", path);
-                // println!("Cost: {}", cost);
-                // println!("Elapsed time: {:.2?}", elapsed_time);
-                
                 elapsed_times.push((filenames[index].to_string(), algorithm_names[index_algorithm].to_string(), cost, path, elapsed_time));
-                
             }
-            
-            // println!("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
-            //report.append(elapsed_times.clone());
+            // report.push(elapsed_times);
         }
 
         if let Err(err) = write_elapsed_times_to_csv(&elapsed_times, file_path) {
@@ -72,6 +65,6 @@ fn main() {
         } else {
             println!("File creation failed or file not found.");
         }
-    } */
+    }
 }
 

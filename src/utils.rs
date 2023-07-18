@@ -6,13 +6,13 @@ use crate::Duration;
 use crate::BufReader;
 
 
-pub fn calculate_cost(path: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> u32 {
+pub fn calculate_cost(path: &Vec<&u32>, adjacency_matrix: &Vec<Vec<u32>>) -> u32 {
     let mut cost = 0;
 
     for i in 0..(path.len()) {
         let current_vertex = path[i];
         let next_vertex = path[(i + 1) % path.len()];
-        cost += adjacency_matrix[current_vertex as usize][next_vertex as usize];
+        cost += adjacency_matrix[*current_vertex as usize][*next_vertex as usize];
     }
 
     return cost;

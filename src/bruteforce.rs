@@ -8,11 +8,10 @@ pub fn bruteforce(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
     let mut best_path: Vec<u32> = Vec::new();
 
     for permutation in permutations {
-        let permutation_vec: Vec<u32> = permutation.into_iter().map(|&x| x).collect();
-        let cost = calculate_cost(&permutation_vec, &adjacency_matrix);
+        let cost = calculate_cost(&permutation, &adjacency_matrix);
         if cost <= best_cost {
             best_cost = cost;
-            best_path = permutation_vec;
+            best_path = permutation.into_iter().map(|&x| x).collect();
         }
     }
 
