@@ -1,30 +1,35 @@
 use std::time::Instant;
 use crate::utils::*;
 use itertools::Itertools;
+use std::collections::{HashMap, HashSet, VecDeque};
+
+type Vertex = usize;
 
 pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
     // -> Vec<Vec<u32>>
     let mut start_time = Instant::now();
     let mut mst: Vec<Vec<u32>> = prim(adjacency_matrix);
-    println!("MST");
-    print_matrix(&mst);
+    // println!("MST");
+    // print_matrix(&mst);
 
     let vertices_with_odd_degree = vertices_with_odd_degree(&mst);
-    println!("Vertices with odd degree");
-    println!("{:?}", vertices_with_odd_degree);
+    // println!("Vertices with odd degree");
+    // println!("{:?}", vertices_with_odd_degree);
 
     let mut subgraph_with_odd_degree_vertices = subgraph_with_odd_degree_vertices(&vertices_with_odd_degree, &adjacency_matrix);
-    println!("Subgraph with odd degree vertices");
-    print_matrix(&subgraph_with_odd_degree_vertices);
+    // println!("Subgraph with odd degree vertices");
+    // print_matrix(&subgraph_with_odd_degree_vertices);
 
-    // let full_matching = vec![vec![8,7], vec![6,9]]; // tsp1_253 NetworkX python script
-    // let full_matching = vec![vec![0,2]]; // tsp2_1248
-    let full_matching = find_minimum_weight_perfect_matching(&subgraph_with_odd_degree_vertices);
+    // let full_matching = vec![(8,7), (6,9)]; // tsp1_253 NetworkX python script
+    // let full_matching = vec![(0,2)]; // tsp2_1248
+    let full_matching = minimum_weight_perfect_matching(&subgraph_with_odd_degree_vertices);
+    let unique_matching = remove_duplicate_edges(full_matching);
+    
     println!("Full matching");
-    println!("{:?}", full_matching);
-    let mut eulerian_multigraph = create_eulerian_multigraph(mst, full_matching);
-    println!("Eulerian multigraph");
-    print_matrix(&eulerian_multigraph);
+    println!("{:?}", unique_matching);
+    let mut eulerian_multigraph = create_eulerian_multigraph(mst, unique_matching);
+    // println!("Eulerian multigraph");
+    // print_matrix(&eulerian_multigraph);
 
     let euler_tour = find_eulerian_cycle(&mut eulerian_multigraph);
 	println!("Euler tour \n{:?}", euler_tour);
@@ -53,128 +58,6 @@ pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
     (hamiltonian_path, cost)
 }
 
-type AdjacencyMatrix = Vec<Vec<u32>>;
-
-// Function to find the minimum-weight perfect matching using the Hungarian algorithm
-fn find_minimum_weight_perfect_matching(adj_matrix: &AdjacencyMatrix) -> Vec<(usize, usize)> {
-    // Number of vertices on each side of the bipartite graph
-    let n = adj_matrix.len();
-    let m = adj_matrix[0].len();
-
-    // Function to find the minimum-weight perfect matching using the Hungarian algorithm
-    fn hungarian_algorithm(adj_matrix: &AdjacencyMatrix) -> Vec<Option<usize>> {
-        let n = adj_matrix.len();
-        let m = adj_matrix[0].len();
-
-        // Step 1: Subtract the minimum value of each row from each element in that row
-        let mut reduced_matrix = adj_matrix.clone();
-        for i in 0..n {
-            let min_val = *reduced_matrix[i].iter().min().unwrap();
-            for j in 0..m {
-                reduced_matrix[i][j] -= min_val;
-            }
-        }
-
-        // Step 2: Subtract the minimum value of each column from each element in that column
-        for j in 0..m {
-            let min_val = (0..n).map(|i| reduced_matrix[i][j]).min().unwrap();
-            for i in 0..n {
-                reduced_matrix[i][j] -= min_val;
-            }
-        }
-
-        // Step 3: Construct the cover matrix
-        let mut cover_matrix = vec![vec![false; m]; n];
-        let mut row_cover = vec![false; n];
-        let mut col_cover = vec![false; m];
-
-        // Step 4: Iterate until a minimum-weight perfect matching is found
-        let mut num_covered_rows = 0;
-        while num_covered_rows < n {
-            // Find an uncovered zero in the reduced matrix
-            let (mut zero_row, mut zero_col) = (0, 0);
-            let mut found_zero = false;
-            for i in 0..n {
-                if !row_cover[i] {
-                    for j in 0..m {
-                        if !col_cover[j] && reduced_matrix[i][j] == 0 {
-                            zero_row = i;
-                            zero_col = j;
-                            found_zero = true;
-                            break;
-                        }
-                    }
-                }
-                if found_zero {
-                    break;
-                }
-            }
-
-            if !found_zero {
-                // Step 6: No uncovered zero found. Proceed to Step 6
-                let min_uncovered_value = (0..n)
-                    .filter(|&i| !row_cover[i])
-                    .map(|i| {
-                        (0..m)
-                            .filter(|&j| !col_cover[j])
-                            .map(|j| reduced_matrix[i][j])
-                            .min()
-                            .unwrap()
-                    })
-                    .min()
-                    .unwrap();
-
-                // Step 6: Modify the cover matrix
-                for i in 0..n {
-                    if row_cover[i] {
-                        for j in 0..m {
-                            reduced_matrix[i][j] += min_uncovered_value;
-                        }
-                    }
-                }
-                for j in 0..m {
-                    if !col_cover[j] {
-                        for i in 0..n {
-                            reduced_matrix[i][j] -= min_uncovered_value;
-                        }
-                    }
-                }
-            } else {
-                // Step 5: Modify the cover matrix
-                cover_matrix[zero_row][zero_col] = true;
-                row_cover[zero_row] = true;
-                col_cover[zero_col] = true;
-                num_covered_rows += 1;
-            }
-        }
-
-        // Step 7: Extract the minimum-weight perfect matching from the cover matrix
-        let mut matching = vec![None; n];
-        for i in 0..n {
-            for j in 0..m {
-                if cover_matrix[i][j] {
-                    matching[i] = Some(j);
-                }
-            }
-        }
-        
-        matching
-    }
-
-    // Find the minimum-weight perfect matching using the Hungarian algorithm
-    let matching = hungarian_algorithm(adj_matrix);
-
-    let mut full_matching = Vec::new();
-    for (i, &opt_j) in matching.iter().enumerate() {
-        if let Some(j) = opt_j {
-            full_matching.push((i, j));
-        }
-    }
-
-    full_matching
-}
-
-
 pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize, usize)>) -> Vec<Vec<u32>> {
     let mut multigraph: Vec<Vec<u32>> = vec![vec![0; mst.len()]; mst.len()];
     for i in 0..mst.len() {
@@ -189,7 +72,88 @@ pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize
         multigraph[v][u] += 1;
     }
 
-    (multigraph)
+    multigraph
+}
+
+fn minimum_weight_perfect_matching(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<(Vertex, Vertex)> {
+    let num_vertices = adjacency_matrix.len();
+    let mut matching: HashMap<Vertex, Vertex> = HashMap::new();
+    let mut visited: HashSet<Vertex> = HashSet::new();
+
+    for v in 0..num_vertices {
+        if !matching.contains_key(&v) {
+            if let Some(path) = find_augmenting_path(adjacency_matrix, &matching, v, &mut visited) {
+                augment_matching(&mut matching, &path);
+            }
+        }
+    }
+
+    matching.into_iter().collect()
+}
+
+fn find_augmenting_path(
+    adjacency_matrix: &Vec<Vec<u32>>,
+    matching: &HashMap<Vertex, Vertex>,
+    v: Vertex,
+    visited: &mut HashSet<Vertex>,
+) -> Option<Vec<Vertex>> {
+    let num_vertices = adjacency_matrix.len();
+    let mut queue = VecDeque::new();
+    queue.push_back(v);
+    visited.clear();
+    visited.insert(v);
+    let mut parent: HashMap<Vertex, Vertex> = HashMap::new();
+    parent.insert(v, v);
+
+    while let Some(current) = queue.pop_front() {
+        for u in 0..num_vertices {
+            if adjacency_matrix[current][u] > 0 && !visited.contains(&u) {
+                visited.insert(u);
+                queue.push_back(u);
+                parent.insert(u, current);
+
+                if !matching.contains_key(&u) {
+                    return Some(reconstruct_path(&parent, v, u));
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn reconstruct_path(parent: &HashMap<Vertex, Vertex>, start: Vertex, end: Vertex) -> Vec<Vertex> {
+    let mut path = vec![end];
+    let mut current = end;
+
+    while current != start {
+        current = parent[&current];
+        path.push(current);
+    }
+
+    path.reverse();
+    path
+}
+
+fn augment_matching(matching: &mut HashMap<Vertex, Vertex>, path: &Vec<Vertex>) {
+    for i in (0..path.len() - 1).step_by(2) {
+        matching.insert(path[i], path[i + 1]);
+        matching.insert(path[i + 1], path[i]);
+    }
+}
+
+fn remove_duplicate_edges(matching: Vec<(Vertex, Vertex)>) -> Vec<(Vertex, Vertex)> {
+    let mut unique_edges: HashSet<(Vertex, Vertex)> = HashSet::new();
+    let mut result: Vec<(Vertex, Vertex)> = Vec::new();
+
+    for edge in matching {
+        if !unique_edges.contains(&edge) && !unique_edges.contains(&(edge.1, edge.0)) {
+            unique_edges.insert(edge);
+            result.push(edge);
+        }
+    }
+
+    result
 }
 
 pub fn vertices_with_odd_degree(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<u32> {
@@ -199,7 +163,7 @@ pub fn vertices_with_odd_degree(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<u32> {
         let degree = row.iter().filter(|&value| *value != 0).count();
         if degree % 2 != 0 {vertices_with_odd_degree.push(vertex as u32)};
     }
-    (vertices_with_odd_degree)
+    vertices_with_odd_degree
 }
 
 pub fn prim(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
@@ -229,7 +193,7 @@ pub fn prim(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
         mst[b][a] = min_value;
         visited[b] = true;
     }
-    (mst)
+    mst
 }
 
 pub fn subgraph_with_odd_degree_vertices(vertices_with_odd_degree: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
@@ -240,7 +204,7 @@ pub fn subgraph_with_odd_degree_vertices(vertices_with_odd_degree: &Vec<u32>, ad
         subgraph[i][j] = adjacency_matrix[i][j];
         subgraph[j][i] = adjacency_matrix[j][i];
     }
-    (subgraph)
+    subgraph
 }
 
 fn find_eulerian_cycle(adjacency_matrix: &mut Vec<Vec<u32>>) -> Vec<u32> {
@@ -268,5 +232,5 @@ fn find_eulerian_cycle(adjacency_matrix: &mut Vec<Vec<u32>>) -> Vec<u32> {
         }
     }
     cycle.reverse();
-    (cycle)
+    cycle
 }

@@ -22,8 +22,8 @@ fn main() {
     let filenames = ["tsp1_253.txt",
                     "tsp2_1248.txt",
                     "tsp3_1194.txt",
-                    // "tsp4_7013.txt",
-                    // "tsp5_27603.txt"
+                    "tsp4_7013.txt",
+                    "tsp5_27603.txt"
                     ];
     
     let file_path = "data/report_bruteforce.csv";
