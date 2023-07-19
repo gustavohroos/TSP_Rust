@@ -2,37 +2,27 @@ use std::time::Instant;
 use crate::utils::*;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::fs::{File, OpenOptions};
+use std::io::{self, Write};
 
 type Vertex = usize;
 
 pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
-    // -> Vec<Vec<u32>>
     let mut start_time = Instant::now();
     let mut mst: Vec<Vec<u32>> = prim(adjacency_matrix);
-    // println!("MST");
-    // print_matrix(&mst);
 
     let vertices_with_odd_degree = vertices_with_odd_degree(&mst);
-    // println!("Vertices with odd degree");
-    // println!("{:?}", vertices_with_odd_degree);
 
     let mut subgraph_with_odd_degree_vertices = subgraph_with_odd_degree_vertices(&vertices_with_odd_degree, &adjacency_matrix);
-    // println!("Subgraph with odd degree vertices");
-    // print_matrix(&subgraph_with_odd_degree_vertices);
 
-    // let full_matching = vec![(8,7), (6,9)]; // tsp1_253 NetworkX python script
-    // let full_matching = vec![(0,2)]; // tsp2_1248
-    let full_matching = minimum_weight_perfect_matching(&subgraph_with_odd_degree_vertices);
-    let unique_matching = remove_duplicate_edges(full_matching);
-    
+    let full_matching = minimum_weight_matching(&mst, &subgraph_with_odd_degree_vertices, &vertices_with_odd_degree);
     println!("Full matching");
-    println!("{:?}", unique_matching);
-    let mut eulerian_multigraph = create_eulerian_multigraph(mst, unique_matching);
-    // println!("Eulerian multigraph");
-    // print_matrix(&eulerian_multigraph);
+    println!("{:?}", full_matching);
+    
+
+    let mut eulerian_multigraph = create_eulerian_multigraph(mst, full_matching);
 
     let euler_tour = find_eulerian_cycle(&mut eulerian_multigraph);
-	println!("Euler tour \n{:?}", euler_tour);
 
     let mut hamiltonian_path: Vec<u32> = Vec::new();
     for vertex in euler_tour {
@@ -41,21 +31,88 @@ pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
         }
     }
 
-    // Reference to the original vector
     let reference_to_vec: &Vec<u32> = &hamiltonian_path;
-
-    // New vector containing references to the elements in the original vector
     let transformed_vec: Vec<&u32> = reference_to_vec.iter().collect();
-
     let cost = calculate_cost(&transformed_vec, &adjacency_matrix);
 
     let mut end_time = Instant::now();
     let mut elapsed_time = end_time - start_time;
-    println!("Christofides : {:?}", elapsed_time);
+    println!("Nosso christofides : {:?}", elapsed_time);
     println!("Cost: {}", cost);
-    println!("Path: {:?}", hamiltonian_path);
 
     (hamiltonian_path, cost)
+}
+
+fn minimum_weight_matching(mst: &Vec<Vec<u32>>, adjacency_matrix: &Vec<Vec<u32>>, odd_vertices: &Vec<u32>) -> Vec<(usize, usize)> {
+    let mut full_matching: Vec<(usize, usize)> = Vec::new();
+    let mut vertices: Vec<u32> = odd_vertices.clone();
+    let mut pairs: Vec<(usize, usize, usize)> = Vec::new();
+    let mut lowest_weight = u32::MAX;
+    let num_vertices = vertices.len() / 2;
+    let mut result_combination = Vec::new();
+    let mut lowest_weight = u32::MAX;
+    
+    for combination in vertices.iter().combinations(2) {
+        let i = *combination[0] as usize;
+        let j = *combination[1] as usize;
+        let weight = adjacency_matrix[i][j];
+        pairs.push((i, j, weight as usize));
+    }
+
+    result_combination = find_lowest_weight_combination(
+        &pairs,
+        num_vertices
+    );
+
+    println!("result combination: {:?}", result_combination);
+
+    result_combination
+}
+
+fn find_lowest_weight_combination(
+        pairs: &Vec<(usize, usize, usize)>,
+        num_vertices: usize,
+    ) -> Vec<(usize, usize)> {
+    let mut result_combination: Vec<(usize, usize)> = Vec::new();
+    let mut stack: Vec<(
+        Vec<(usize, usize, usize)>,
+        HashSet<usize>,
+        Vec<(usize, usize, usize)>,
+        u32,
+    )> = Vec::new();
+    let mut lowest_weight = u32::MAX;
+
+    stack.push((pairs.clone(), HashSet::new(), Vec::new(), 0));
+
+    while !stack.is_empty() {
+        let (pairs, used_vertices, current_combination, weight_so_far) = stack.pop().unwrap();
+
+        if current_combination.len() == num_vertices {
+            if weight_so_far < lowest_weight {
+                lowest_weight = weight_so_far;
+                result_combination.clear();
+                result_combination.extend(current_combination.iter().map(|&(u, v, _)| (u, v)));
+            }
+            continue;
+        }
+
+        for &(u, v, weight) in pairs.iter() {
+            if !used_vertices.contains(&u) && !used_vertices.contains(&v) {
+                let mut new_used_vertices = used_vertices.clone();
+                new_used_vertices.insert(u);
+                new_used_vertices.insert(v);
+
+                let mut new_combination = current_combination.clone();
+                new_combination.push((u, v, weight));
+
+                let new_weight = weight_so_far + weight as u32;
+
+                stack.push((pairs.clone(), new_used_vertices, new_combination, new_weight));
+            }
+        }
+    }
+
+    result_combination
 }
 
 pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize, usize)>) -> Vec<Vec<u32>> {
@@ -73,87 +130,6 @@ pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize
     }
 
     multigraph
-}
-
-fn minimum_weight_perfect_matching(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<(Vertex, Vertex)> {
-    let num_vertices = adjacency_matrix.len();
-    let mut matching: HashMap<Vertex, Vertex> = HashMap::new();
-    let mut visited: HashSet<Vertex> = HashSet::new();
-
-    for v in 0..num_vertices {
-        if !matching.contains_key(&v) {
-            if let Some(path) = find_augmenting_path(adjacency_matrix, &matching, v, &mut visited) {
-                augment_matching(&mut matching, &path);
-            }
-        }
-    }
-
-    matching.into_iter().collect()
-}
-
-fn find_augmenting_path(
-    adjacency_matrix: &Vec<Vec<u32>>,
-    matching: &HashMap<Vertex, Vertex>,
-    v: Vertex,
-    visited: &mut HashSet<Vertex>,
-) -> Option<Vec<Vertex>> {
-    let num_vertices = adjacency_matrix.len();
-    let mut queue = VecDeque::new();
-    queue.push_back(v);
-    visited.clear();
-    visited.insert(v);
-    let mut parent: HashMap<Vertex, Vertex> = HashMap::new();
-    parent.insert(v, v);
-
-    while let Some(current) = queue.pop_front() {
-        for u in 0..num_vertices {
-            if adjacency_matrix[current][u] > 0 && !visited.contains(&u) {
-                visited.insert(u);
-                queue.push_back(u);
-                parent.insert(u, current);
-
-                if !matching.contains_key(&u) {
-                    return Some(reconstruct_path(&parent, v, u));
-                }
-            }
-        }
-    }
-
-    None
-}
-
-fn reconstruct_path(parent: &HashMap<Vertex, Vertex>, start: Vertex, end: Vertex) -> Vec<Vertex> {
-    let mut path = vec![end];
-    let mut current = end;
-
-    while current != start {
-        current = parent[&current];
-        path.push(current);
-    }
-
-    path.reverse();
-    path
-}
-
-fn augment_matching(matching: &mut HashMap<Vertex, Vertex>, path: &Vec<Vertex>) {
-    for i in (0..path.len() - 1).step_by(2) {
-        matching.insert(path[i], path[i + 1]);
-        matching.insert(path[i + 1], path[i]);
-    }
-}
-
-fn remove_duplicate_edges(matching: Vec<(Vertex, Vertex)>) -> Vec<(Vertex, Vertex)> {
-    let mut unique_edges: HashSet<(Vertex, Vertex)> = HashSet::new();
-    let mut result: Vec<(Vertex, Vertex)> = Vec::new();
-
-    for edge in matching {
-        if !unique_edges.contains(&edge) && !unique_edges.contains(&(edge.1, edge.0)) {
-            unique_edges.insert(edge);
-            result.push(edge);
-        }
-    }
-
-    result
 }
 
 pub fn vertices_with_odd_degree(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<u32> {
