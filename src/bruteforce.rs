@@ -6,7 +6,7 @@ use std::io::Write;
 pub fn bruteforce(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
     let vertices: Vec<u32> = (0..adjacency_matrix.len() as u32).collect();
     let permutations = vertices.iter().permutations(vertices.len());
-    let file_path = "latest_permutation.txt";
+    let file_path = "temp/latest_permutation.txt";
     let mut best_cost: u32 = u32::MAX;
     let mut best_path: Vec<u32> = Vec::new();
     let mut counter = 0;
