@@ -1,0 +1,5 @@
+tsp_file,algorithm,cost,elapsed_time
+0,christofides,260,0.0012456
+0,christofides,260,0.00266
+tsp1_253,christofides,260,0.0037429
+tsp2_1248,christofides,1272,0.0244052

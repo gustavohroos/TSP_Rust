@@ -18,32 +18,30 @@ pub fn calculate_cost(path: &Vec<&u32>, adjacency_matrix: &Vec<Vec<u32>>) -> u32
     return cost;
 }
 
-pub fn read_matrix_from_files(folder: &str, filenames: &[&str]) -> Vec<Vec<Vec<u32>>> {
+pub fn read_matrix_from_file(folder: &str, filename: &str) -> Vec<Vec<u32>> {
 
-    let mut adjacency_matrix_list: Vec<Vec<Vec<u32>>> = Vec::new();
+    let mut adjacency_matrix_list: Vec<Vec<u32>> = Vec::new();
 
-    for filename in filenames {
-        let path = format!("{}/{}", folder, filename);
-        let file = File::open(path).expect("Não foi possível abrir o arquivo");
+    let path = format!("{}/{}", folder, filename);
+    let file = File::open(path).expect("Não foi possível abrir o arquivo");
 
-        let reader = BufReader::new(file);
+    let reader = BufReader::new(file);
 
-        let mut adjacency_matrix: Vec<Vec<u32>> = Vec::new();
+    let mut adjacency_matrix: Vec<Vec<u32>> = Vec::new();
 
-        for line in reader.lines() {
-            let line = line.expect("Falha ao ler a linha do arquivo");
+    for line in reader.lines() {
+        let line = line.expect("Falha ao ler a linha do arquivo");
 
-            let values: Vec<u32> = line
-                .split_whitespace()
-                .map(|val| val.parse().expect("Falha ao fazer o parse do valor"))
-                .collect();
+        let values: Vec<u32> = line
+            .split_whitespace()
+            .map(|val| val.parse().expect("Falha ao fazer o parse do valor"))
+            .collect();
 
-            adjacency_matrix.push(values);
-        }
-        adjacency_matrix_list.push(adjacency_matrix);
+        adjacency_matrix.push(values);
     }
 
-    return adjacency_matrix_list;
+
+    return adjacency_matrix;
 }
 
 pub fn print_matrix(matrix: &Vec<Vec<u32>>) {
@@ -92,4 +90,48 @@ pub fn write_elapsed_times_to_csv(
     }
 
     Ok(())
+}
+
+pub fn is_symmetric (adjacency_matrix: &Vec<Vec<u32>>) -> bool {
+    for i in 0..adjacency_matrix.len() {
+        for j in 0..adjacency_matrix.len() {
+            if adjacency_matrix[i][j] != adjacency_matrix[j][i] {
+                return false
+            }
+        }
+    }
+    return true;
+}
+
+pub fn prim(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
+    let symmetric : bool = is_symmetric(&adjacency_matrix);
+    let mut mst: Vec<Vec<u32>> = vec![vec![0; adjacency_matrix.len()]; adjacency_matrix.len()];
+    let mut visited: Vec<bool> = vec![false; adjacency_matrix.len()];
+    visited[0] = true;
+
+    while visited.iter().any(|&v| !v) {
+        let mut a = 0;
+        let mut b = 0;
+        let mut min_value = u32::MAX;
+
+        for i in 0..adjacency_matrix.len() {
+            if visited[i] {
+                let row = &adjacency_matrix[i];
+                for j in 0..row.len() {
+                    if !visited[j] && row[j] != 0 && row[j] < min_value {
+                        min_value = row[j];
+                        a = i;
+                        b = j;
+                    }
+                }
+            }
+        }
+
+        mst[a][b] = min_value;
+        if symmetric {
+            mst[b][a] = min_value;
+        }
+        visited[b] = true;
+    }
+    mst
 }

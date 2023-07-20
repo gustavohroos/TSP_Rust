@@ -8,21 +8,33 @@ use std::io::{self, Write};
 type Vertex = usize;
 
 pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
-    let mut start_time = Instant::now();
     let mut mst: Vec<Vec<u32>> = prim(adjacency_matrix);
+   /*  let mut soma = 0;
+    for row in &mst {
+        for j in row {
+            soma += j;
+        }
+    }
+    println!("{}", soma); */
+    println!("MST");
+    print_matrix(&mst);
 
-    let vertices_with_odd_degree = vertices_with_odd_degree(&mst);
+    let odd_degree_vertices = odd_degree_vertices(&mst);
+    println!("{:?}", odd_degree_vertices);
 
-    let mut subgraph_with_odd_degree_vertices = subgraph_with_odd_degree_vertices(&vertices_with_odd_degree, &adjacency_matrix);
+    let mut odd_degree_subgraph = odd_degree_subgraph(&odd_degree_vertices, &adjacency_matrix);
+    println!("Subgrafo com vértices de grau ímpar");
+    print_matrix(&odd_degree_subgraph);
 
-    let full_matching = minimum_weight_matching(&mst, &subgraph_with_odd_degree_vertices, &vertices_with_odd_degree);
-    println!("Full matching");
-    println!("{:?}", full_matching);
-    
+    let full_matching = minimum_weight_matching(&mst, &odd_degree_subgraph, &odd_degree_vertices);
+    println!("Full matching: {:?}", full_matching);
 
-    let mut eulerian_multigraph = create_eulerian_multigraph(mst, full_matching);
+    let mut eulerian_multigraph = create_eulerian_multigraph(mst, full_matching, &adjacency_matrix);
+    println!("Multigrafo euleriano");
+    print_matrix(&eulerian_multigraph);
 
     let euler_tour = find_eulerian_cycle(&mut eulerian_multigraph);
+    println!("Euler tour: {:?}", euler_tour);
 
     let mut hamiltonian_path: Vec<u32> = Vec::new();
     for vertex in euler_tour {
@@ -33,12 +45,7 @@ pub fn christofides(adjacency_matrix: &Vec<Vec<u32>>) -> (Vec<u32>, u32) {
 
     let reference_to_vec: &Vec<u32> = &hamiltonian_path;
     let transformed_vec: Vec<&u32> = reference_to_vec.iter().collect();
-    let cost = calculate_cost(&transformed_vec, &adjacency_matrix);
-
-    let mut end_time = Instant::now();
-    let mut elapsed_time = end_time - start_time;
-    println!("Nosso christofides : {:?}", elapsed_time);
-    println!("Cost: {}", cost);
+    let cost = calculate_cost(&transformed_vec, adjacency_matrix);
 
     (hamiltonian_path, cost)
 }
@@ -64,8 +71,6 @@ fn minimum_weight_matching(mst: &Vec<Vec<u32>>, adjacency_matrix: &Vec<Vec<u32>>
         num_vertices
     );
 
-    println!("result combination: {:?}", result_combination);
-
     result_combination
 }
 
@@ -81,12 +86,12 @@ fn find_lowest_weight_combination(
         u32,
     )> = Vec::new();
     let mut lowest_weight = u32::MAX;
-
+    let counter = 0;
     stack.push((pairs.clone(), HashSet::new(), Vec::new(), 0));
 
     while !stack.is_empty() {
         let (pairs, used_vertices, current_combination, weight_so_far) = stack.pop().unwrap();
-
+        counter += 1;
         if current_combination.len() == num_vertices {
             if weight_so_far < lowest_weight {
                 lowest_weight = weight_so_far;
@@ -115,7 +120,7 @@ fn find_lowest_weight_combination(
     result_combination
 }
 
-pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize, usize)>) -> Vec<Vec<u32>> {
+pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize, usize)>, adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
     let mut multigraph: Vec<Vec<u32>> = vec![vec![0; mst.len()]; mst.len()];
     for i in 0..mst.len() {
        for j in 0..mst.len() {
@@ -125,56 +130,30 @@ pub fn create_eulerian_multigraph(mst : Vec<Vec<u32>>, full_matching: Vec<(usize
        }
     }
     for (u, v) in full_matching {
-        multigraph[u][v] += 1;
-        multigraph[v][u] += 1;
+        if adjacency_matrix[u][v] > 0 {
+            multigraph[u][v] += 1;
+        }
+        if adjacency_matrix[v][u] > 0 {
+            multigraph[v][u] += 1;
+        }
     }
 
     multigraph
 }
 
-pub fn vertices_with_odd_degree(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<u32> {
-    let mut vertices_with_odd_degree: Vec<u32> = Vec::new();
+pub fn odd_degree_vertices(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<u32> {
+    let mut odd_degree_vertices: Vec<u32> = Vec::new();
     for vertex in 0..adjacency_matrix.len() {
         let row = &adjacency_matrix[vertex as usize];
         let degree = row.iter().filter(|&value| *value != 0).count();
-        if degree % 2 != 0 {vertices_with_odd_degree.push(vertex as u32)};
+        if degree % 2 != 0 {odd_degree_vertices.push(vertex as u32)};
     }
-    vertices_with_odd_degree
+    odd_degree_vertices
 }
 
-pub fn prim(adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
-    let mut mst: Vec<Vec<u32>> = vec![vec![0; adjacency_matrix.len()]; adjacency_matrix.len()];
-    let mut visited: Vec<bool> = vec![false; adjacency_matrix.len()];
-    visited[0] = true;
-
-    while visited.iter().any(|&v| !v) {
-        let mut a = 0;
-        let mut b = 0;
-        let mut min_value = u32::MAX;
-
-        for i in 0..adjacency_matrix.len() {
-            if visited[i] {
-                let row = &adjacency_matrix[i];
-                for j in 0..row.len() {
-                    if !visited[j] && row[j] != 0 && row[j] < min_value {
-                        min_value = row[j];
-                        a = i;
-                        b = j;
-                    }
-                }
-            }
-        }
-
-        mst[a][b] = min_value;
-        mst[b][a] = min_value;
-        visited[b] = true;
-    }
-    mst
-}
-
-pub fn subgraph_with_odd_degree_vertices(vertices_with_odd_degree: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
+pub fn odd_degree_subgraph(odd_degree_vertices: &Vec<u32>, adjacency_matrix: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
     let mut subgraph: Vec<Vec<u32>> = vec![vec![0; adjacency_matrix.len()]; adjacency_matrix.len()];
-    for pair in vertices_with_odd_degree.iter().combinations(2) {
+    for pair in odd_degree_vertices.iter().combinations(2) {
         let i = *pair[0] as usize;
         let j = *pair[1] as usize;
         subgraph[i][j] = adjacency_matrix[i][j];
@@ -187,6 +166,7 @@ fn find_eulerian_cycle(adjacency_matrix: &mut Vec<Vec<u32>>) -> Vec<u32> {
     let mut stack: Vec<u32> = Vec::new();
     let mut cycle: Vec<u32> = Vec::new();
     let mut current_vertex = 0;
+    let symmetric : bool =  is_symmetric(&adjacency_matrix);
     stack.push(current_vertex);
 
     while !stack.is_empty() {
@@ -200,7 +180,9 @@ fn find_eulerian_cycle(adjacency_matrix: &mut Vec<Vec<u32>>) -> Vec<u32> {
             }
             stack.push(next_vertex);
             adjacency_matrix[current_vertex as usize][next_vertex as usize] -= 1;
-            adjacency_matrix[next_vertex as usize][current_vertex as usize] -= 1;
+            if symmetric {
+                adjacency_matrix[next_vertex as usize][current_vertex as usize] -= 1;
+            }
             current_vertex = next_vertex;
         } else {
             current_vertex = stack.pop().unwrap();
